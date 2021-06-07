@@ -69,34 +69,61 @@ outlier 범위에 2개 이상 속하는 인덱스를 추출한 후 해당 인덱
 위의 4 가지의 ``train set`` 을 기준으로 ``LinearRegression, RandomFoestRegressor, DecisionTreeRegressor`` 를 진행하여
 ``Fine-Tuning`` 을 위한 모델들을 선정하였습니다.
 
-총 12 가지 모델 중 가장 성능이 좋은 모델들을 다음과 같습니다.
 
-``One-hot encoding`` 된 모든 ``columns`` 들을 살렸을 때,
--  Robust scaler - RandomForestRegressor
--  Minmax scaler - RandomForestRegressor
+### &#128204; 사용한 손실 함수
+- MAE
+- MPE
+- Underperformance Ratio
+- RMSLE
 
-위의 두 가지 모델이 ``MAE`` 수치가 가장 낮음으로 성능이 가장 좋습니다.
+### &#128204; 성능 확인
 
-단 ``DecisionTreeRegressor`` 모델 과 성능면에서 큰 차이가 나지 않았습니다.
+- LinearRegression 을 제외한 두 가지 모델에선 ``MAE`` 를 보았을 땐 큰 차이가 나지 않았습니다.
+- 이에 또 다른 지표로 ``Under_prediction Ratio`` 와 ``MPE`` 를 사용하여 성능을 비교하였습니다.
 
-이에 또 다른 성능 지표인 ``Under-prediction 의 비율`` 을 확인해 본 결과
+<br>
+<br>
 
-``One-hot encoding`` 된 모든 ``columns`` 들을 살렸을 때,
--  Robust scaler - DecisionTreeRegressor
--  Minmax scaler - DecisionTreeRegressor
-
-위의 두 모델이 ``RandomForestRegressor`` 모델보다 비율이 $11\%$ 가량 더 낮았습니다.
+그 결과, 모든 학습데이터 상에서 ``Decision Tree Regressor`` 모델이 성능이 가장 좋음을 알 수있었습니다.
 
 <br>
 
-따라서 최종적으로 ``MAE`` 와 ``Under-prediction의 비율`` 모두 고려하였을 때,
+- 학습 데이터 상에선 ``mae`` 같은 경우는 큰 차이가 나지 않았습니다.
+- 하지만 ``mpe`` 를 비교하였을 땐 일부만 사용한 학습데이터가 더 크게 빗나감을 확인하였습니다.
+- 마지막으로 ``ratio`` 를 보았을 땐 일부만 사용한 학습데이터가 더 좋음을 확인하였습니다.
 
-가장 성능이 좋은 모델은
+<br>
 
-``One-hot encoding`` 된 모든 ``columns`` 들을 살렸을 때,
--  Robust scaler - DecisionTreeRegressor
+따라서 결론은 다음과 같습니다.
 
-입니다.
+<br>
+
+<b>
+MPE 를 보았을 때 모든 학습데이터에서 전반적으로 overperformance 를 보임을 알 수 있습니다.
+</b>
+
+<br>
+<br>
+
+또한 ``One-hot encoding`` 의 전체 데이터를 학습하는 것은 ``MPE`` 관점에선 일부 데이터를 학습하는 경우보다 0 에 더 가까우므로 예측의 정확성은 더 높다라고 할 수 있습니다.
+하지만 ``RATIO`` 관점에서 보면 일부 데이터를 학습하는 경우가 Under-prediction 의 비율이 더 낮음을 확인할 수 있습니다.
+
+<br>
+
+정리하자면 예측 정확도는 전체 데이터를 학습하는 경우가 유리하나 이는 3~4 정도의 작은 차이가 존재합니다. 일부 데이터를 학습하는 경우는 ratio 비율이 1.5 % 정도 더 낮게 관측이 됩니다.
+
+<br>
+
+두 경우 모두 작은 차이지만, 예측의 정확도 보다 ``under-prediction`` 의 비율을 줄이는 것이
+조금 더 중요하다 하였으므로 최종적인 학습데이터는 일부 데이터를 학습하는 경우로 선정하였습니다.
+또한 그 중에서도 편차의 값이 더 작은 ``minmax -scaler`` 를 사용한 경우를 채택하였습니다.
+
+<br>
+<br>
+
+- 최종 모델 : DecisionTreeRegressor
+- 최종 학습데이터: One-hot encoding 중 일부 데이터 및 minmax-scaler 사용
+
 
 
 <br>
@@ -104,13 +131,20 @@ outlier 범위에 2개 이상 속하는 인덱스를 추출한 후 해당 인덱
 
 ### &#128204; Fine-Tune
 
-최종적인 모델에 대하여 ``MAE`` 값과 ``Under-prediction의 비율`` 을 최적화하는 파라미터를 ``gridsearchcv`` 을 통하여 선정하였습니다.
+최종적인 모델에 대하여 ``Rmsle`` 값과 ``Under-prediction Ratio`` 을 최적화하는 파라미터를 ``gridsearchcv`` 을 통하여 선정하였습니다.
 
+``gridsearchcv`` 를 ``rmsle`` 와 ``underperformance_ratio`` 를 사용하여 최적화를 시켜보았을 때, ``underperfomance_ratio`` 를 사용했을 때가 전체적으로 성능이 더 좋았습니다.
 
 ### &#128204; Result
 
-최종적인 모델과 파라미터에 따른 ``MAE`` 와 ``Under-prediction의 비율`` 은 다음과 같습니다.
+따라서 최종적인 모델과 파라미터에 따른 결과는 다음과 같습니다.
 
-- ``MAE``: $6.76436235749662$
-- ``Under-prediction의 비율``: $25.673000000000002$
+
+- ``MAE``: $5.050480769230769$
+- ``MPE``: $3.3260909763313604$
+- ``RMSLE``: $0.2415444755985762$
+- ``Under-prediction의 비율``: $19.231$
+
+
+
 
